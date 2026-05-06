@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Number Guessing Game 🎯</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f1a;
+      --surface: #161929;
+      --card: #1e2236;
+      --border: #2a2f4a;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --success: #43e97b;
+      --warning: #f7971e;
+      --danger: #ff6584;
+      --text: #e8eaf6;
+      --muted: #7b82a8;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background-image: radial-gradient(ellipse at 20% 50%, rgba(108,99,255,0.08) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 20%, rgba(255,101,132,0.06) 0%, transparent 50%);
+    }
+
+    .container { width: 100%; max-width: 520px; }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 28px; }
+    .header .emoji { font-size: 3rem; animation: float 3s ease-in-out infinite; display: block; margin-bottom: 8px; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .header h1 { font-size: 2rem; font-weight: 900; background: linear-gradient(135deg, #6c63ff, #ff6584); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header p { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
+
+    /* ── Card ── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 28px; margin-bottom: 20px; transition: box-shadow 0.3s; }
+    .card:hover { box-shadow: 0 8px 40px rgba(108,99,255,0.12); }
+
+    /* ── Stats bar ── */
+    .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 10px; text-align: center; }
+    .stat .val { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+    .stat .lbl { font-size: 0.72rem; color: var(--muted); margin-top: 2px; letter-spacing: .5px; text-transform: uppercase; }
+
+    /* ── Attempts pip track ── */
+    .attempts-track { display: flex; gap: 8px; margin: 16px 0; justify-content: center; }
+    .pip { width: 36px; height: 10px; border-radius: 99px; background: var(--border); transition: background 0.4s, transform 0.2s; }
+    .pip.used  { background: var(--accent2); }
+    .pip.active { background: var(--accent); transform: scaleY(1.4); }
+    .pip.won { background: var(--success); }
+
+    /* ── Range hint ── */
+    .range-bar { background: var(--surface); border-radius: 8px; padding: 10px 14px; margin-bottom: 18px; font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+    .range-bar span { color: var(--text); font-weight: 600; }
+
+    /* ── Input ── */
+    .input-row { display: flex; gap: 10px; }
+    #guessInput {
+      flex: 1; padding: 14px 18px; font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 700;
+      background: var(--surface); border: 2px solid var(--border); border-radius: 12px; color: var(--text);
+      outline: none; transition: border-color 0.3s;
+      -moz-appearance: textfield;
+    }
+    #guessInput::-webkit-inner-spin-button, #guessInput::-webkit-outer-spin-button { -webkit-appearance: none; }
+    #guessInput:focus { border-color: var(--accent); }
+    #guessInput:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    button {
+      padding: 14px 22px; font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700;
+      border: none; border-radius: 12px; cursor: pointer; transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+    }
+    button:active { transform: scale(0.96); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    #guessBtn { background: linear-gradient(135deg, #6c63ff, #9b88ff); color: #fff; flex-shrink: 0; }
+    #guessBtn:hover:not(:disabled) { box-shadow: 0 0 20px rgba(108,99,255,0.5); }
+
+    /* ── Feedback ── */
+    #feedback {
+      margin-top: 18px; padding: 16px 20px; border-radius: 14px; font-size: 1.1rem; font-weight: 600;
+      text-align: center; display: none; animation: popIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    @keyframes popIn { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
+    #feedback.high   { background: rgba(255,101,132,0.15); border: 1px solid rgba(255,101,132,0.3); color: var(--danger); }
+    #feedback.low    { background: rgba(247,151,30,0.15);  border: 1px solid rgba(247,151,30,0.3);  color: var(--warning); }
+    #feedback.correct{ background: rgba(67,233,123,0.15);  border: 1px solid rgba(67,233,123,0.3);  color: var(--success); }
+    #feedback.lose   { background: rgba(255,101,132,0.12); border: 1px solid rgba(255,101,132,0.2); color: var(--danger); }
+
+    /* ── History log ── */
+    #log { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; min-height: 20px; }
+    .badge { padding: 4px 12px; border-radius: 99px; font-size: 0.8rem; font-weight: 600; }
+    .badge.high    { background: rgba(255,101,132,0.15); color: var(--danger); }
+    .badge.low     { background: rgba(247,151,30,0.15);  color: var(--warning); }
+    .badge.correct { background: rgba(67,233,123,0.15);  color: var(--success); }
+
+    /* ── Play again btn ── */
+    #playAgainBtn { display: none; width: 100%; margin-top: 14px; background: linear-gradient(135deg, #43e97b, #38f9d7); color: #0d0f1a; }
+    #playAgainBtn:hover { box-shadow: 0 0 24px rgba(67,233,123,0.4); }
+
+    /* ── Scoreboard ── */
+    .scoreboard { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+    .scoreboard h3 { font-size: 0.8rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+    .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .score-item { background: var(--card); border-radius: 10px; padding: 12px; text-align: center; border: 1px solid var(--border); }
+    .score-item .sv { font-size: 1.5rem; font-weight: 700; }
+    .score-item .sl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+    .sv.gold  { color: #ffd700; }
+    .sv.green { color: var(--success); }
+    .sv.blue  { color: var(--accent); }
+    .sv.pink  { color: var(--accent2); }
+
+    /* ── Round result banner ── */
+    #roundResult { display: none; text-align: center; padding: 10px; margin-top: 10px; font-size: 0.9rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <span class="emoji">🎯</span>
+    <h1>Number Guessing Game</h1>
+    <p>Guess the secret number between <strong>1</strong> and <strong>100</strong></p>
+  </div>
+
+  <!-- Live stats -->
+  <div class="stats">
+    <div class="stat"><div class="val" id="statRound">1</div><div class="lbl">Round</div></div>
+    <div class="stat"><div class="val" id="statWins">0</div><div class="lbl">Wins</div></div>
+    <div class="stat"><div class="val" id="statScore">0</div><div class="lbl">Score</div></div>
+  </div>
+
+  <!-- Game card -->
+  <div class="card">
+    <div class="attempts-track" id="pips"></div>
+
+    <div class="range-bar" id="rangeHint">
+      🔍 Range: <span id="rangeText">1 – 100</span>
+    </div>
+
+    <div class="input-row">
+      <input type="number" id="guessInput" min="1" max="100" placeholder="Enter guess…" autocomplete="off"/>
+      <button id="guessBtn" onclick="submitGuess()">Guess</button>
+    </div>
+
+    <div id="feedback"></div>
+    <div id="log"></div>
+
+    <button id="playAgainBtn" onclick="startRound()">▶ Play Again</button>
+    <div id="roundResult"></div>
+  </div>
+
+  <!-- Scoreboard -->
+  <div class="scoreboard">
+    <h3>📊 Scoreboard</h3>
+    <div class="score-grid">
+      <div class="score-item"><div class="sv gold" id="sbScore">0</div><div class="sl">Total Score</div></div>
+      <div class="score-item"><div class="sv green" id="sbWins">0 / 0</div><div class="sl">Wins / Rounds</div></div>
+      <div class="score-item"><div class="sv blue" id="sbWinRate">—</div><div class="sl">Win Rate</div></div>
+      <div class="score-item"><div class="sv pink" id="sbBest">—</div><div class="sl">Best Score</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Config ──────────────────────────────────────
+  const MAX_ATTEMPTS = 5;
+  const RANGE_MIN    = 1;
+  const RANGE_MAX    = 100;
+
+  // ── State ───────────────────────────────────────
+  let secret, attemptsUsed, roundActive;
+  let totalScore = 0, roundsPlayed = 0, roundsWon = 0, bestRoundScore = 0;
+  let guessedLo, guessedHi;
+
+  // ── Initialise ──────────────────────────────────
+  function startRound() {
+    secret       = Math.floor(Math.random() * (RANGE_MAX - RANGE_MIN + 1)) + RANGE_MIN;
+    attemptsUsed = 0;
+    roundActive  = true;
+    guessedLo    = RANGE_MIN;
+    guessedHi    = RANGE_MAX;
+    roundsPlayed++;
+
+    document.getElementById('statRound').textContent = roundsPlayed;
+    document.getElementById('guessInput').value      = '';
+    document.getElementById('guessInput').disabled   = false;
+    document.getElementById('guessBtn').disabled     = false;
+    document.getElementById('playAgainBtn').style.display = 'none';
+    document.getElementById('feedback').style.display     = 'none';
+    document.getElementById('roundResult').style.display  = 'none';
+    document.getElementById('log').innerHTML               = '';
+    document.getElementById('rangeText').textContent       = `${RANGE_MIN} – ${RANGE_MAX}`;
+
+    buildPips();
+    document.getElementById('guessInput').focus();
+  }
+
+  // ── Build attempt pips ──────────────────────────
+  function buildPips() {
+    const track = document.getElementById('pips');
+    track.innerHTML = '';
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      const pip = document.createElement('div');
+      pip.className = 'pip' + (i === 0 ? ' active' : '');
+      pip.id = `pip${i}`;
+      track.appendChild(pip);
+    }
+  }
+
+  function updatePips(won) {
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      const pip = document.getElementById(`pip${i}`);
+      if (!pip) continue;
+      if (i < attemptsUsed - 1) { pip.className = 'pip ' + (won ? 'won' : 'used'); }
+      else if (i === attemptsUsed - 1) { pip.className = 'pip ' + (won ? 'won' : 'used'); }
+      else if (i === attemptsUsed) { pip.className = 'pip active'; }
+      else { pip.className = 'pip'; }
+    }
+    if (won || attemptsUsed >= MAX_ATTEMPTS) {
+      for (let i = 0; i < MAX_ATTEMPTS; i++) {
+        const pip = document.getElementById(`pip${i}`);
+        if (pip && i < attemptsUsed) pip.className = 'pip ' + (won ? 'won' : 'used');
+      }
+    }
+  }
+
+  // ── Score calculation ────────────────────────────
+  function calcScore(attempts) {
+    if (attempts === 1) return MAX_ATTEMPTS * 2;
+    return Math.max(0, MAX_ATTEMPTS - (attempts - 1));
+  }
+
+  // ── Submit guess ─────────────────────────────────
+  function submitGuess() {
+    if (!roundActive) return;
+    const input = document.getElementById('guessInput');
+    const guess = parseInt(input.value, 10);
+
+    if (isNaN(guess) || guess < RANGE_MIN || guess > RANGE_MAX) {
+      showFeedback(`⚠️ Enter a number between ${RANGE_MIN} and ${RANGE_MAX}`, 'high');
+      return;
+    }
+
+    attemptsUsed++;
+    input.value = '';
+    input.focus();
+
+    if (guess === secret) {
+      const score = calcScore(attemptsUsed);
+      totalScore += score;
+      roundsWon++;
+      if (score > bestRoundScore) bestRoundScore = score;
+      updatePips(true);
+      addBadge(guess, 'correct');
+
+      const bonus = attemptsUsed === 1 ? ' 🎉 First-try bonus!' : '';
+      showFeedback(`✅ Correct! The number was ${secret}.${bonus} +${score} pts`, 'correct');
+      endRound(true, score);
+    } else if (guess > secret) {
+      guessedHi = Math.min(guessedHi, guess - 1);
+      updatePips(false);
+      addBadge(guess, 'high');
+      showFeedback(`🔻 Too High! Try lower.`, 'high');
+      document.getElementById('rangeText').textContent = `${guessedLo} – ${guessedHi}`;
+      if (attemptsUsed >= MAX_ATTEMPTS) endRound(false, 0);
+    } else {
+      guessedLo = Math.max(guessedLo, guess + 1);
+      updatePips(false);
+      addBadge(guess, 'low');
+      showFeedback(`🔺 Too Low! Try higher.`, 'low');
+      document.getElementById('rangeText').textContent = `${guessedLo} – ${guessedHi}`;
+      if (attemptsUsed >= MAX_ATTEMPTS) endRound(false, 0);
+    }
+
+    document.getElementById('statScore').textContent = totalScore;
+    document.getElementById('statWins').textContent  = roundsWon;
+    updateScoreboard();
+  }
+
+  // ── End round ────────────────────────────────────
+  function endRound(won, score) {
+    roundActive = false;
+    document.getElementById('guessInput').disabled = true;
+    document.getElementById('guessBtn').disabled   = true;
+    document.getElementById('playAgainBtn').style.display = 'block';
+
+    if (!won) {
+      showFeedback(`❌ Out of attempts! The number was ${secret}.`, 'lose');
+    }
+    const res = document.getElementById('roundResult');
+    res.style.display = 'block';
+    res.textContent = won
+      ? `Round ${roundsPlayed} complete — +${score} points earned!`
+      : `Round ${roundsPlayed} complete — 0 points this time.`;
+  }
+
+  // ── UI helpers ───────────────────────────────────
+  function showFeedback(msg, cls) {
+    const el = document.getElementById('feedback');
+    el.textContent  = msg;
+    el.className    = cls;
+    el.style.display = 'block';
+    // re-trigger animation
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = '';
+  }
+
+  function addBadge(val, cls) {
+    const log   = document.getElementById('log');
+    const badge = document.createElement('span');
+    badge.className   = `badge ${cls}`;
+    badge.textContent = val;
+    log.appendChild(badge);
+  }
+
+  function updateScoreboard() {
+    const wr = roundsPlayed ? ((roundsWon / roundsPlayed) * 100).toFixed(0) + '%' : '—';
+    document.getElementById('sbScore').textContent   = totalScore;
+    document.getElementById('sbWins').textContent    = `${roundsWon} / ${roundsPlayed}`;
+    document.getElementById('sbWinRate').textContent = wr;
+    document.getElementById('sbBest').textContent    = bestRoundScore || '—';
+  }
+
+  // ── Enter key ────────────────────────────────────
+  document.getElementById('guessInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitGuess();
+  });
+
+  // ── Boot ─────────────────────────────────────────
+  startRound();
+</script>
+</body>
+</html>
