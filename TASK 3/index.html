@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Bank | Premium ATM Experience</title>
+    <meta name="description" content="Secure and modern ATM simulation experience by Nexus Bank. Manage your finances with ease and elegance.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="glass-container">
+        <header>
+            <div class="logo">
+                <span class="logo-icon">◈</span>
+                <h1>NEXUS<span>BANK</span></h1>
+            </div>
+            <div class="status-bar">
+                <span id="date-time"></span>
+                <span class="status-dot"></span> Secure Session
+            </div>
+        </header>
+
+        <main id="app-screen">
+            <!-- Screens will be injected here via JavaScript -->
+            <section id="welcome-screen" class="screen active">
+                <div class="hero">
+                    <h2>Welcome Back</h2>
+                    <p>Enter your session to access your account</p>
+                    <div class="card-visual">
+                        <div class="chip"></div>
+                        <div class="card-number">**** **** **** 8842</div>
+                        <div class="card-holder">PREMIUM MEMBER</div>
+                    </div>
+                    <button id="start-btn" class="btn-primary">Access Account</button>
+                </div>
+            </section>
+
+            <section id="menu-screen" class="screen">
+                <div class="balance-card">
+                    <h3>Available Balance</h3>
+                    <div class="amount" id="display-balance">₹0.00</div>
+                </div>
+                <div class="menu-grid">
+                    <button class="menu-item" data-action="withdraw">
+                        <div class="icon">↓</div>
+                        <span>Withdraw</span>
+                    </button>
+                    <button class="menu-item" data-action="deposit">
+                        <div class="icon">↑</div>
+                        <span>Deposit</span>
+                    </button>
+                    <button class="menu-item" data-action="balance">
+                        <div class="icon">◎</div>
+                        <span>Statement</span>
+                    </button>
+                    <button class="menu-item logout" data-action="exit">
+                        <div class="icon">✕</div>
+                        <span>Exit</span>
+                    </button>
+                </div>
+            </section>
+
+            <section id="action-screen" class="screen">
+                <div class="back-nav">
+                    <button id="back-btn">← Back to Menu</button>
+                </div>
+                <div class="action-form">
+                    <h2 id="action-title">Withdraw</h2>
+                    <p id="action-desc">Enter the amount you wish to withdraw</p>
+                    
+                    <div class="input-wrapper">
+                        <span class="currency">₹</span>
+                        <input type="number" id="amount-input" placeholder="0.00" min="0" step="0.01">
+                    </div>
+
+                    <div class="quick-amounts" id="quick-amounts">
+                        <!-- Generated dynamically -->
+                    </div>
+
+                    <button id="confirm-btn" class="btn-primary">Confirm Transaction</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Nexus Financial Systems. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification">
+        <div class="notif-content">
+            <span id="notif-icon"></span>
+            <span id="notif-message"></span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
