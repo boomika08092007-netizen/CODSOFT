@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Grade Calculator</title>
+  <meta name="description" content="A beautiful Student Grade Calculator — enter marks for multiple subjects and get your grade instantly."/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg1: #0d0f1f;
+      --bg2: #151728;
+      --glass: rgba(255,255,255,0.06);
+      --glass-border: rgba(255,255,255,0.12);
+      --accent: #7c6af7;
+      --accent2: #4fc3f7;
+      --success: #43e97b;
+      --warn: #f7971e;
+      --danger: #f64f59;
+      --text: #e8eaf6;
+      --muted: #8b8fa8;
+      --input-bg: rgba(255,255,255,0.05);
+      --radius: 16px;
+      --shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, var(--bg1) 0%, #1a1040 50%, var(--bg2) 100%);
+      min-height: 100vh;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 60px;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    header .badge {
+      display: inline-block;
+      background: rgba(124,106,247,0.18);
+      border: 1px solid rgba(124,106,247,0.4);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    header h1 {
+      font-size: clamp(28px, 5vw, 46px);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+    }
+    header p {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: var(--radius);
+      padding: 36px;
+      width: 100%;
+      max-width: 680px;
+      box-shadow: var(--shadow);
+    }
+
+    /* ── Form Groups ── */
+    .form-group { margin-bottom: 22px; }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,106,247,0.2);
+    }
+    input.error { border-color: var(--danger) !important; box-shadow: 0 0 0 3px rgba(246,79,89,0.2) !important; }
+    .error-msg { color: var(--danger); font-size: 12px; margin-top: 5px; display: none; }
+    .error-msg.show { display: block; }
+    select option { background: #1a1040; }
+
+    /* ── Subjects ── */
+    #subjects-wrapper { display: flex; flex-direction: column; gap: 12px; margin-bottom: 10px; }
+    .subject-row {
+      display: grid;
+      grid-template-columns: 1fr 120px 36px;
+      gap: 10px;
+      align-items: center;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .subject-row input[type="number"] { text-align: center; }
+    .remove-btn {
+      width: 36px; height: 36px;
+      background: rgba(246,79,89,0.15);
+      border: 1px solid rgba(246,79,89,0.3);
+      border-radius: 8px;
+      color: var(--danger);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .remove-btn:hover { background: rgba(246,79,89,0.3); }
+    .col-labels {
+      display: grid;
+      grid-template-columns: 1fr 120px 36px;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .col-labels span { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Add Subject Btn ── */
+    #add-subject-btn {
+      background: rgba(124,106,247,0.1);
+      border: 1px dashed rgba(124,106,247,0.4);
+      color: var(--accent);
+      border-radius: 10px;
+      padding: 10px;
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 4px;
+    }
+    #add-subject-btn:hover { background: rgba(124,106,247,0.2); }
+
+    /* ── Divider ── */
+    .divider { border: none; border-top: 1px solid var(--glass-border); margin: 28px 0; }
+
+    /* ── Calculate Btn ── */
+    #calculate-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--accent) 0%, #4fc3f7 100%);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(124,106,247,0.4);
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    }
+    #calculate-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(124,106,247,0.5); }
+    #calculate-btn:active { transform: translateY(0); }
+
+    /* ── Reset Btn ── */
+    #reset-btn {
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      color: var(--muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    #reset-btn:hover { border-color: var(--muted); color: var(--text); }
+
+    /* ── Results ── */
+    #results {
+      margin-top: 32px;
+      display: none;
+      animation: fadeUp 0.5s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .results-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .results-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .results-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+    /* Grade Circle */
+    .grade-circle-wrap { display: flex; justify-content: center; margin-bottom: 28px; }
+    .grade-circle {
+      width: 110px; height: 110px;
+      border-radius: 50%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-weight: 800;
+      font-size: 40px;
+      border: 4px solid;
+      box-shadow: 0 0 30px;
+      transition: all 0.4s;
+    }
+    .grade-circle small { font-size: 11px; font-weight: 600; letter-spacing: 1px; margin-top: -4px; }
+    .grade-a  { color: var(--success); border-color: var(--success); box-shadow: 0 0 30px rgba(67,233,123,0.3); }
+    .grade-b  { color: #4fc3f7;       border-color: #4fc3f7;       box-shadow: 0 0 30px rgba(79,195,247,0.3); }
+    .grade-c  { color: var(--warn);   border-color: var(--warn);   box-shadow: 0 0 30px rgba(247,151,30,0.3); }
+    .grade-d  { color: #ff9800;       border-color: #ff9800;       box-shadow: 0 0 30px rgba(255,152,0,0.3); }
+    .grade-f  { color: var(--danger); border-color: var(--danger); box-shadow: 0 0 30px rgba(246,79,89,0.3); }
+
+    /* Stats Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--input-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-card .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+    .stat-card .stat-value { font-size: 22px; font-weight: 800; color: var(--text); }
+    .stat-card .stat-unit  { font-size: 12px; color: var(--muted); }
+
+    /* Progress Bar */
+    .progress-wrap { margin-bottom: 24px; }
+    .progress-wrap .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: 13px; color: var(--muted); margin-bottom: 8px;
+    }
+    .progress-track {
+      background: rgba(255,255,255,0.08);
+      border-radius: 99px;
+      height: 12px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 1s cubic-bezier(0.4,0,0.2,1);
+      width: 0%;
+    }
+
+    /* Subject breakdown table */
+    .breakdown-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .breakdown-table { width: 100%; border-collapse: collapse; }
+    .breakdown-table th, .breakdown-table td {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 14px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .breakdown-table th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .breakdown-table td { color: var(--text); }
+    .breakdown-table tr:last-child td { border-bottom: none; }
+    .mark-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 99px; margin-top: 4px; }
+    .mark-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+    .mark-pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .pill-a { background: rgba(67,233,123,0.15); color: var(--success); }
+    .pill-b { background: rgba(79,195,247,0.15); color: #4fc3f7; }
+    .pill-c { background: rgba(247,151,30,0.15);  color: var(--warn); }
+    .pill-d { background: rgba(255,152,0,0.15);   color: #ff9800; }
+    .pill-f { background: rgba(246,79,89,0.15);   color: var(--danger); }
+
+    /* Remark banner */
+    .remark-banner {
+      border-radius: 10px;
+      padding: 12px 18px;
+      margin-top: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .remark-a { background: rgba(67,233,123,0.12); color: var(--success); border: 1px solid rgba(67,233,123,0.3); }
+    .remark-b { background: rgba(79,195,247,0.12); color: #4fc3f7;        border: 1px solid rgba(79,195,247,0.3); }
+    .remark-c { background: rgba(247,151,30,0.12); color: var(--warn);    border: 1px solid rgba(247,151,30,0.3); }
+    .remark-d { background: rgba(255,152,0,0.12);  color: #ff9800;        border: 1px solid rgba(255,152,0,0.3); }
+    .remark-f { background: rgba(246,79,89,0.12);  color: var(--danger);  border: 1px solid rgba(246,79,89,0.3); }
+
+    /* Responsive */
+    @media (max-width: 500px) {
+      .card { padding: 24px 18px; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .subject-row { grid-template-columns: 1fr 90px 36px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="badge">✦ Academic Tool</div>
+  <h1>Student Grade Calculator</h1>
+  <p>Enter marks for each subject and get your grade instantly</p>
+</header>
+
+<div class="card">
+
+  <!-- Student Name -->
+  <div class="form-group">
+    <label for="student-name">Student Name</label>
+    <input type="text" id="student-name" placeholder="e.g. Alice Johnson" autocomplete="off"/>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- Subject Rows -->
+  <div class="col-labels">
+    <span>Subject Name</span>
+    <span style="text-align:center">Marks (0–100)</span>
+    <span></span>
+  </div>
+  <div id="subjects-wrapper"></div>
+  <button id="add-subject-btn">＋ Add Subject</button>
+
+  <hr class="divider"/>
+
+  <button id="calculate-btn">⚡ Calculate Grade</button>
+  <button id="reset-btn">↺ Reset</button>
+
+  <!-- Results -->
+  <div id="results">
+    <hr class="divider"/>
+    <div class="results-header">
+      <h2 id="result-student-name">Report Card</h2>
+      <p id="result-subtitle"></p>
+    </div>
+
+    <div class="grade-circle-wrap">
+      <div class="grade-circle" id="grade-circle">
+        <span id="grade-letter">A</span>
+        <small id="grade-label">EXCELLENT</small>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Marks</div>
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-unit" id="stat-total-max"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Average</div>
+        <div class="stat-value" id="stat-avg">—</div>
+        <div class="stat-unit">%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Subjects</div>
+        <div class="stat-value" id="stat-count">—</div>
+        <div class="stat-unit">total</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>0%</span>
+        <span id="progress-pct">0%</span>
+        <span>100%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+    </div>
+
+    <div class="breakdown-title">Subject Breakdown</div>
+    <table class="breakdown-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Subject</th>
+          <th>Marks</th>
+          <th>Grade</th>
+        </tr>
+      </thead>
+      <tbody id="breakdown-body"></tbody>
+    </table>
+
+    <div class="remark-banner" id="remark-banner"></div>
+  </div><!-- /results -->
+
+</div><!-- /card -->
+
+<script>
+  // ── State ──────────────────────────────────────────────
+  let subjectCount = 0;
+
+  // ── Grade logic ───────────────────────────────────────
+  function gradeInfo(avg) {
+    if (avg >= 90) return { letter:'A', label:'Excellent',     cls:'a', remark:'🏆 Outstanding performance! Keep it up!' };
+    if (avg >= 75) return { letter:'B', label:'Good',          cls:'b', remark:'👍 Great job! A little more effort for an A.' };
+    if (avg >= 60) return { letter:'C', label:'Average',       cls:'c', remark:'📘 Decent result. Focus on weak subjects.' };
+    if (avg >= 50) return { letter:'D', label:'Below Average', cls:'d', remark:'⚠️ Need improvement. Study harder!' };
+    return          { letter:'F', label:'Fail',          cls:'f', remark:'❌ Failed. Don\'t give up — seek help and retry.' };
+  }
+
+  function subjectGrade(m) {
+    if (m >= 90) return {letter:'A', cls:'a'};
+    if (m >= 75) return {letter:'B', cls:'b'};
+    if (m >= 60) return {letter:'C', cls:'c'};
+    if (m >= 50) return {letter:'D', cls:'d'};
+    return              {letter:'F', cls:'f'};
+  }
+
+  // ── Add a subject row ──────────────────────────────────
+  function addSubject(defaultName='', defaultMark='') {
+    subjectCount++;
+    const id = subjectCount;
+    const wrapper = document.getElementById('subjects-wrapper');
+
+    const row = document.createElement('div');
+    row.className = 'subject-row';
+    row.dataset.id = id;
+    row.innerHTML = `
+      <input type="text"   id="sub-name-${id}" placeholder="Subject ${id}" value="${defaultName}" autocomplete="off"/>
+      <input type="number" id="sub-mark-${id}" placeholder="0–100" min="0" max="100" step="0.01" value="${defaultMark}"/>
+      <button class="remove-btn" onclick="removeSubject(${id})" title="Remove">×</button>
+    `;
+    wrapper.appendChild(row);
+
+    // Live validation on mark input
+    const markInput = document.getElementById(`sub-mark-${id}`);
+    markInput.addEventListener('input', () => {
+      const v = parseFloat(markInput.value);
+      if (markInput.value !== '' && (isNaN(v) || v < 0 || v > 100)) {
+        markInput.classList.add('error');
+      } else {
+        markInput.classList.remove('error');
+      }
+    });
+  }
+
+  function removeSubject(id) {
+    const rows = document.querySelectorAll('.subject-row');
+    if (rows.length === 1) { alert('You need at least 1 subject.'); return; }
+    const row = document.querySelector(`.subject-row[data-id="${id}"]`);
+    if (row) row.remove();
+  }
+
+  // ── Calculate ──────────────────────────────────────────
+  document.getElementById('calculate-btn').addEventListener('click', () => {
+    const rows = document.querySelectorAll('.subject-row');
+    if (rows.length === 0) { alert('Please add at least one subject.'); return; }
+
+    let valid = true;
+    const subjects = [];
+
+    rows.forEach(row => {
+      const id = row.dataset.id;
+      const nameEl = document.getElementById(`sub-name-${id}`);
+      const markEl = document.getElementById(`sub-mark-${id}`);
+      const name = nameEl.value.trim() || `Subject ${id}`;
+      const markVal = markEl.value.trim();
+      const mark = parseFloat(markVal);
+
+      if (markVal === '' || isNaN(mark) || mark < 0 || mark > 100) {
+        markEl.classList.add('error');
+        valid = false;
+      } else {
+        markEl.classList.remove('error');
+        subjects.push({ name, mark });
+      }
+    });
+
+    if (!valid) { alert('Please fix the highlighted fields (marks must be 0–100).'); return; }
+
+    const total   = subjects.reduce((s, x) => s + x.mark, 0);
+    const maxMarks = subjects.length * 100;
+    const avg     = total / subjects.length;
+    const info    = gradeInfo(avg);
+    const studentName = document.getElementById('student-name').value.trim() || 'Student';
+
+    // ── Populate Results ──
+    document.getElementById('result-student-name').textContent = `${studentName}'s Report Card`;
+    document.getElementById('result-subtitle').textContent =
+      `${subjects.length} subject${subjects.length>1?'s':''} · Calculated on ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}`;
+
+    const circle = document.getElementById('grade-circle');
+    circle.className = `grade-circle grade-${info.cls}`;
+    document.getElementById('grade-letter').textContent = info.letter;
+    document.getElementById('grade-label').textContent  = info.label.toUpperCase();
+
+    document.getElementById('stat-total').textContent    = total % 1 === 0 ? total : total.toFixed(1);
+    document.getElementById('stat-total-max').textContent = `/ ${maxMarks}`;
+    document.getElementById('stat-avg').textContent      = avg.toFixed(2);
+    document.getElementById('stat-count').textContent    = subjects.length;
+
+    // Progress bar (animate after short delay)
+    const fill = document.getElementById('progress-fill');
+    const pctLabel = document.getElementById('progress-pct');
+    fill.style.width = '0%';
+    pctLabel.textContent = '0%';
+    setTimeout(() => {
+      fill.style.width = avg.toFixed(2) + '%';
+      pctLabel.textContent = avg.toFixed(2) + '%';
+    }, 100);
+
+    // Breakdown table
+    const tbody = document.getElementById('breakdown-body');
+    tbody.innerHTML = '';
+    subjects.forEach((s, i) => {
+      const sg = subjectGrade(s.mark);
+      const pct = s.mark;
+      tbody.innerHTML += `
+        <tr>
+          <td style="color:var(--muted)">${i+1}</td>
+          <td>${s.name}</td>
+          <td>
+            ${s.mark % 1 === 0 ? s.mark : s.mark.toFixed(1)} / 100
+            <div class="mark-bar"><div class="mark-bar-fill" style="width:${pct}%"></div></div>
+          </td>
+          <td><span class="mark-pill pill-${sg.cls}">${sg.letter}</span></td>
+        </tr>`;
+    });
+
+    // Remark
+    const banner = document.getElementById('remark-banner');
+    banner.className = `remark-banner remark-${info.cls}`;
+    banner.textContent = info.remark;
+
+    // Show results
+    const resultsEl = document.getElementById('results');
+    resultsEl.style.display = 'block';
+    setTimeout(() => resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  });
+
+  // ── Reset ─────────────────────────────────────────────
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    document.getElementById('student-name').value = '';
+    document.getElementById('subjects-wrapper').innerHTML = '';
+    subjectCount = 0;
+    addSubject(); addSubject(); addSubject();
+    document.getElementById('results').style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  document.getElementById('add-subject-btn').addEventListener('click', () => addSubject());
+
+  // ── Init: 3 default rows ───────────────────────────────
+  addSubject('', '');
+  addSubject('', '');
+  addSubject('', '');
+</script>
+</body>
+</html>
